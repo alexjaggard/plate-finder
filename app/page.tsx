@@ -1,65 +1,169 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
 
 export default function Home() {
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (search.length === 0) {
+      setResults([]);
+      return;
+    }
+
+    setLoading(true);
+
+    const delay = setTimeout(async () => {
+      const res = await fetch(`/api/search?q=${search}`);
+      const data = await res.json();
+
+      setResults(data);
+      setLoading(false);
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [search]);
+
+  const highlightMatch = (plate: string) => {
+    if (!search) return plate;
+
+    const parts = plate.split(new RegExp(`(${search})`, "gi"));
+
+    return parts.map((part, i) =>
+      part.toLowerCase() === search.toLowerCase() ? (
+        <span key={i} style={{ color: "red" }}>{part}</span>
+      ) : (
+        <span key={i}>{part}</span>
+      )
+    );
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "#0d0d0d",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        paddingTop: 100,
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
+      {/* Title */}
+      <h1
+        style={{
+          color: "#FFD700",
+          fontSize: 48,
+          fontWeight: "bold",
+          textShadow: "0 0 15px rgba(255,215,0,0.6)",
+        }}
+      >
+        PlateFinder
+      </h1>
+
+      <p
+        style={{
+          color: "#aaa",
+          marginTop: 10,
+          fontSize: 18,
+        }}
+      >
+        Find your perfect private number plate
+      </p>
+
+      {/* Search */}
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search plates (e.g. TOM, S4M)"
+        style={{
+          marginTop: 40,
+          width: 400,
+          padding: 16,
+          fontSize: 20,
+          borderRadius: 8,
+          border: "1px solid #333",
+          background: "#1a1a1a",
+          color: "white",
+          textAlign: "center",
+          outline: "none",
+        }}
+      />
+
+      {/* Loading */}
+      {loading && (
+        <div style={{ marginTop: 15, color: "#888" }}>
+          Searching...
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      )}
+
+      {/* No results */}
+      {!loading && results.length === 0 && search.length > 0 && (
+        <div style={{ marginTop: 15, color: "#ff9800" }}>
+          No plates found
         </div>
-      </main>
-    </div>
+      )}
+
+      {/* Popular Plates */}
+      {search.length === 0 && (
+        <div style={{ marginTop: 50, textAlign: "center" }}>
+          <h3 style={{ color: "#aaa" }}>Popular Plates</h3>
+          <div style={{ marginTop: 10, color: "#FFD700" }}>
+            AB24 TOM • S4M • M4TT • J4MES
+          </div>
+        </div>
+      )}
+
+      {/* Results */}
+      <div
+        style={{
+          marginTop: 50,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 20,
+        }}
+      >
+        {results.map((plate) => (
+          <div
+            key={plate.id}
+            style={{
+              background: "#FFD800",
+              color: "black",
+              padding: "18px 40px",
+              fontSize: 32,
+              fontWeight: "bold",
+              letterSpacing: 4,
+              border: "4px solid black",
+              borderRadius: 8,
+              boxShadow: "0 0 20px rgba(255,215,0,0.4)",
+              minWidth: 260,
+              textAlign: "center",
+            }}
+          >
+            {highlightMatch(plate.plate)}
+
+            <div style={{ marginTop: 10, fontSize: 16 }}>
+              £2,495
+            </div>
+
+            <button
+              style={{
+                marginTop: 10,
+                padding: "8px 16px",
+                cursor: "pointer",
+                borderRadius: 4,
+                border: "none",
+              }}
+            >
+              View Plate
+            </button>
+          </div>
+        ))}
+      </div>
+    </main>
   );
 }
