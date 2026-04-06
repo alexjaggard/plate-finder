@@ -1,3 +1,4 @@
+// deploy attempt 2
 "use client";
 
 import { useState, useEffect } from "react";
@@ -166,4 +167,4 @@ export default function Home() {
       </div>
     </main>
   );
-}
+}``
